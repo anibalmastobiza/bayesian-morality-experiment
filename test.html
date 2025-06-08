@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Survey sobre Moralidad Bayesiana</title>
+    <script src="https://unpkg.com/jspsych@7.3.1"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+    <link href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-content">
+        <h1>Test del Survey de Moralidad Bayesiana</h1>
+        <p id="status">Iniciando...</p>
+        <div id="jspsych-target"></div>
+    </div>
+
+    <script>
+        document.getElementById('status').innerHTML = 'JavaScript funcionando...';
+        
+        try {
+            const jsPsych = initJsPsych({
+                display_element: 'jspsych-target',
+                on_finish: function() {
+                    document.getElementById('status').innerHTML = '¡Experimento completado!';
+                }
+            });
+
+            const welcome = {
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: `
+                    <h2>¡Bienvenido al Survey de Moralidad Bayesiana!</h2>
+                    <p>Este es un test para verificar que todo funciona correctamente.</p>
+                    <p><strong>Presiona cualquier tecla para continuar</strong></p>
+                `,
+                choices: "ALL_KEYS"
+            };
+
+            const thanks = {
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: `
+                    <h2>¡Perfecto!</h2>
+                    <p>El sistema está funcionando correctamente.</p>
+                    <p>Tu survey de moralidad bayesiana está listo para usar.</p>
+                    <p><strong>Presiona cualquier tecla para finalizar</strong></p>
+                `,
+                choices: "ALL_KEYS"
+            };
+
+            jsPsych.run([welcome, thanks]);
+
+            document.getElementById('status').innerHTML = 'jsPsych iniciado correctamente';
+            
+        } catch (error) {
+            document.getElementById('status').innerHTML = 'Error: ' + error.message;
+            console.error('Error iniciando jsPsych:', error);
+        }
+    </script>
+</body>
+</html>
