@@ -3,20 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Survey sobre Moralidad Bayesiana - Estudio de Investigación</title>
+    <title>Survey sobre Moralidad Bayesiana</title>
     <script src="https://unpkg.com/jspsych@7.3.1"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.2"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@1.1.2"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-likert@1.1.2"></script>
     <script src="https://unpkg.com/@jspsych/plugin-instructions@1.1.3"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
     <link href="https://unpkg.com/jspsych@7.3.1/css/jspsych.css" rel="stylesheet" type="text/css" />
-    <link href="css/styles.css" rel="stylesheet" type="text/css" />
+    <style>
+        .scenario-text {
+            background: #f0f8ff;
+            padding: 20px;
+            border-left: 4px solid #007bff;
+            margin: 20px 0;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .question-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .probability-scale {
+            margin: 20px 0;
+        }
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
     <div id="jspsych-target"></div>
-    <script src="js/data-handler.js"></script>
-    <script src="js/experiment.js"></script>
+
+    <script>
+        // Obtener parámetros de Prolific
+        const urlParams = new URLSearchParams(window.location.search);
+        const prolificPID = urlParams.get('PROLIFIC_PID') || 'no_id';
+        const studyID = urlParams.get('STUDY_ID') || 'no_study';
+        const sessionID = urlParams.get('SESSION_ID') || 'no_session';
+
+        // Inicializar jsPsych
+        const jsPsych = initJsPsych({
+            display_element: 'jspsych-target',
+            show_progress_bar: true,
+            on_finish: function(data) {
+                // Guardar datos con información de Prolific
+                const allData = jsPsych.data.get().addProperties({
+                    prolific_pid: prolificPID,
+                    study_id: studyID,
+                    session_id: sessionID
+                });
+
+                // Redirigir a Prolific si viene de allí
+                if (prolificPID !== 'no_id') {
+                    // Mostrar mensaje y redirigir
+                    jsPsych.getDisplayElement().innerHTML = `
+                        <div style="text-align: center; padding: 50px;">
+                            <h2>¡Gracias por participar!</h2>
+                            <p>Redirigiendo a Prolific...</p>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        window.location = 'https://app.prolific.co/submissions/complete?cc=CJXZ6K4V';
+                    }, 3000);
+                } else {
+                    // Si no viene de Prolific, mostrar datos
+                    jsPsych.data.displayData();
+                }
+            }
+        });
+
+        // Datos demográficos
+        const demographics = {
+            type: jsPsychSurveyHtmlForm,
+            preamble: '<h3>Información Demográfica</h3>',
+            html: `
+                <p>Edad: <input type="number" name="age" min="18" max="100" required></p>
+                <p>Género: 
+                    <select name="gender" required>
+                        <option value="">Selecciona...</option>
+                        <option value="male">Masculino</option>
+                        <option value="female">Femenino</option>
+                        <option value="non-binary">No binario</option>
+                        <option value="prefer-not">Prefiero no responder</option>
+                    </select>
+                </p>
+                <p>Nivel de educación:
+                    <select name="education" required>
+                        <option value="">Selecciona...</option>
+                        <option value="high-school">Secundaria</option>
+                        <option value="bachelors">Licenciatura</option>
+                        <option value="masters">Maestría</option>
+                        <option value="phd">Doctorado</option>
+                    </select>
+                </p>
+            `
+        };
+
+        // Instrucciones
+        const instructions = {
+            type: jsPsychInstructions,
+            pages: [
+                `<h2>Bienvenido al Estudio sobre Moralidad Bayesiana</h2>
+                 <p>En este estudio exploraremos cómo las personas hacen juicios morales en situaciones de incertidumbre.</p>
+                 <p>Leerás varios escenarios y responderás preguntas sobre ellos.</p>
+                 <p>No hay respuestas correctas o incorrectas. Nos interesa tu opinión sincera.</p>`,
+                
+                `<h3>Instrucciones</h3>
+                 <ul>
+                 <li>Lee cada escenario cuidadosamente</li>
+                 <li>Responde basándote en tu primera impresión</li>
+                 <li>Algunas preguntas te pedirán estimar probabilidades (0-100%)</li>
+                 <li>El estudio toma aproximadamente 15-20 minutos</li>
+                 </ul>`,
+                 
+                `<h3>Confidencialidad</h3>
+                 <p>Todas tus respuestas son completamente anónimas.</p>
+                 <p>Los datos se usarán únicamente para investigación académica.</p>
+                 <p><strong>Haz clic en "Siguiente" para comenzar.</strong></p>`
+            ],
+            show_clickable_nav: true,
+            button_label_next: 'Siguiente',
+            button_label_previous: 'Anterior'
+        };
+
+        // Escenario 1: Tranvía
+        const trolley_scenario = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="scenario-text">
+                    <h3>El Problema del Tranvía con Incertidumbre</h3>
+                    <p>Juan ve un tranvía fuera de control dirigiéndose hacia cinco personas en las vías. 
+                    Puede tirar de una palanca que desvíe el tranvía a una vía lateral donde hay una persona. 
+                    Sin embargo, Juan no está completamente seguro de cuántas personas hay en cada vía:</p>
+                    
+                    <p>• <strong>Vía principal:</strong> Probablemente 5 personas (90% seguro)<br>
+                    • <strong>Vía lateral:</strong> Probablemente 1 persona (70% seguro)</p>
+                    
+                    <p>Juan tiene que decidir rápidamente si tirar de la palanca.</p>
+                </div>
+                <p><em>Presiona ESPACIO para continuar</em></p>
+            `,
+            choices: [' '],
+            data: { scenario: 'trolley_uncertainty' }
+        };
+
+        const trolley_questions = [
+            {
+                type: jsPsychSurveyLikert,
+                questions: [{
+                    prompt: "¿Qué tan moralmente aceptable es que Juan tire de la palanca?",
+                    labels: ['Completamente inaceptable', 'Muy inaceptable', 'Algo inaceptable', 'Neutral', 'Algo aceptable', 'Muy aceptable', 'Completamente aceptable'],
+                    required: true
+                }],
+                data: { scenario: 'trolley_uncertainty', question_type: 'moral_judgment' }
+            },
+            {
+                type: jsPsychSurveyHtmlForm,
+                preamble: '<div class="question-title">¿Cuál es la probabilidad de que la acción de Juan sea moralmente correcta?</div>',
+                html: `
+                    <div class="probability-scale">
+                        <input type="range" name="probability" min="0" max="100" value="50" id="prob-slider" required>
+                        <div class="scale-labels">
+                            <span>0% (Imposible)</span>
+                            <span id="slider-value">50%</span>
+                            <span>100% (Seguro)</span>
+                        </div>
+                    </div>
+                    <script>
+                        document.getElementById('prob-slider').oninput = function() {
+                            document.getElementById('slider-value').innerHTML = this.value + '%';
+                        }
+                    </script>
+                `,
+                data: { scenario: 'trolley_uncertainty', question_type: 'probability_judgment' }
+            },
+            {
+                type: jsPsychSurveyLikert,
+                questions: [{
+                    prompt: "¿Qué tan confiado estás en tu juicio moral?",
+                    labels: ['Nada confiado', 'Poco confiado', 'Algo confiado', 'Bastante confiado', 'Muy confiado'],
+                    required: true
+                }],
+                data: { scenario: 'trolley_uncertainty', question_type: 'confidence' }
+            }
+        ];
+
+        // Escenario 2: Responsabilidad médica
+        const medical_scenario = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="scenario-text">
+                    <h3>Responsabilidad Causal Incierta</h3>
+                    <p>María es doctora en un hospital. Un paciente llega en estado crítico y necesita un 
+                    medicamento específico inmediatamente. María tiene dos opciones:</p>
+                    
+                    <p>• <strong>Medicamento A:</strong> 80% de probabilidad de curar, 5% de efectos secundarios graves<br>
+                    • <strong>Medicamento B:</strong> 60% de probabilidad de curar, 1% de efectos secundarios graves</p>
+                    
+                    <p>María elige el Medicamento A. Desafortunadamente, el paciente desarrolla efectos secundarios graves.
+                    Más tarde se descubre que había un factor genético raro (presente en 2% de la población) 
+                    que María no conocía y que aumentaba el riesgo.</p>
+                </div>
+                <p><em>Presiona ESPACIO para continuar</em></p>
+            `,
+            choices: [' '],
+            data: { scenario: 'medical_uncertainty' }
+        };
+
+        const medical_questions = [
+            {
+                type: jsPsychSurveyLikert,
+                questions: [{
+                    prompt: "¿Qué tan moralmente responsable es María por los efectos secundarios?",
+                    labels: ['No responsable', 'Ligeramente responsable', 'Algo responsable', 'Moderadamente responsable', 'Muy responsable', 'Completamente responsable'],
+                    required: true
+                }],
+                data: { scenario: 'medical_uncertainty', question_type: 'responsibility' }
+            },
+            {
+                type: jsPsychSurveyHtmlForm,
+                preamble: '<div class="question-title">¿Cuál es la probabilidad de que María haya actuado éticamente?</div>',
+                html: `
+                    <div class="probability-scale">
+                        <input type="range" name="probability" min="0" max="100" value="50" required>
+                        <div class="scale-labels">
+                            <span>0%</span>
+                            <span>50%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+                `,
+                data: { scenario: 'medical_uncertainty', question_type: 'probability_judgment' }
+            }
+        ];
+
+        // Finalización
+        const debrief = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <h2>¡Gracias por participar!</h2>
+                <p>Has completado el estudio sobre moralidad bayesiana.</p>
+                <p>Tus respuestas han sido guardadas y son completamente anónimas.</p>
+                <p><strong>Presiona cualquier tecla para finalizar</strong></p>
+            `,
+            choices: "ALL_KEYS",
+            data: { phase: 'debrief' }
+        };
+
+        // Crear timeline del experimento
+        let timeline = [
+            instructions,
+            demographics,
+            trolley_scenario,
+            ...trolley_questions,
+            medical_scenario,
+            ...medical_questions,
+            debrief
+        ];
+
+        // Ejecutar el experimento
+        jsPsych.run(timeline);
+    </script>
 </body>
 </html>
