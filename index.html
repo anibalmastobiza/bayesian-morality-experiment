@@ -42,6 +42,15 @@
     <div id="jspsych-target"></div>
 
     <script>
+        // Función global para actualizar sliders
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueSpan = document.getElementById(valueId);
+            if (slider && valueSpan) {
+                valueSpan.innerHTML = slider.value + '%';
+            }
+        }
+
         // Obtener parámetros de Prolific
         const urlParams = new URLSearchParams(window.location.search);
         const prolificPID = urlParams.get('PROLIFIC_PID') || 'no_id';
@@ -169,18 +178,13 @@
                 preamble: '<div class="question-title">¿Cuál es la probabilidad de que la acción de Juan sea moralmente correcta?</div>',
                 html: `
                     <div class="probability-scale">
-                        <input type="range" name="probability" min="0" max="100" value="50" id="prob-slider" required>
+                        <input type="range" name="probability" min="0" max="100" value="50" id="prob-slider-1" required oninput="updateSliderValue('prob-slider-1', 'slider-value-1')">
                         <div class="scale-labels">
                             <span>0% (Imposible)</span>
-                            <span id="slider-value">50%</span>
+                            <span id="slider-value-1">50%</span>
                             <span>100% (Seguro)</span>
                         </div>
                     </div>
-                    <script>
-                        document.getElementById('prob-slider').oninput = function() {
-                            document.getElementById('slider-value').innerHTML = this.value + '%';
-                        }
-                    </script>
                 `,
                 data: { scenario: 'trolley_uncertainty', question_type: 'probability_judgment' }
             },
@@ -232,15 +236,133 @@
                 preamble: '<div class="question-title">¿Cuál es la probabilidad de que María haya actuado éticamente?</div>',
                 html: `
                     <div class="probability-scale">
-                        <input type="range" name="probability" min="0" max="100" value="50" required>
+                        <input type="range" name="probability" min="0" max="100" value="50" id="prob-slider-2" required oninput="updateSliderValue('prob-slider-2', 'slider-value-2')">
                         <div class="scale-labels">
-                            <span>0%</span>
-                            <span>50%</span>
-                            <span>100%</span>
+                            <span>0% (Imposible)</span>
+                            <span id="slider-value-2">50%</span>
+                            <span>100% (Seguro)</span>
                         </div>
                     </div>
                 `,
                 data: { scenario: 'medical_uncertainty', question_type: 'probability_judgment' }
+            }
+        ];
+
+        // Escenario 3: Inferencia de intención
+        const tech_scenario = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="scenario-text">
+                    <h3>Inferencia de Intención</h3>
+                    <p>Carlos trabaja en una empresa de tecnología. Descubre que el software que está desarrollando 
+                    podría usarse para vigilancia masiva si cae en manos equivocadas. Carlos tiene información limitada:</p>
+                    
+                    <p>• <strong>30% de probabilidad</strong> de que la empresa venda el software a gobiernos autoritarios<br>
+                    • <strong>70% de probabilidad</strong> de que se use solo para seguridad legítima<br>
+                    • Carlos podría filtrar información para alertar al público, arriesgando su trabajo<br>
+                    • Si no actúa y el software se usa mal, miles podrían verse afectados</p>
+                    
+                    <p>Carlos decide no filtrar la información y continuar con el proyecto.</p>
+                </div>
+                <p><em>Presiona ESPACIO para continuar</em></p>
+            `,
+            choices: [' '],
+            data: { scenario: 'tech_intention' }
+        };
+
+        const tech_questions = [
+            {
+                type: jsPsychSurveyLikert,
+                questions: [{
+                    prompt: "¿Qué tan moralmente aceptable es la decisión de Carlos?",
+                    labels: ['Completamente inaceptable', 'Muy inaceptable', 'Algo inaceptable', 'Neutral', 'Algo aceptable', 'Muy aceptable', 'Completamente aceptable'],
+                    required: true
+                }],
+                data: { scenario: 'tech_intention', question_type: 'moral_judgment' }
+            },
+            {
+                type: jsPsychSurveyMultiChoice,
+                questions: [{
+                    prompt: "¿Cuál crees que fue la principal intención de Carlos?",
+                    options: ['Proteger su trabajo', 'Evitar causar pánico innecesario', 'Confiar en su empresa', 'No querer responsabilizarse', 'Otra razón'],
+                    required: true
+                }],
+                data: { scenario: 'tech_intention', question_type: 'intent_judgment' }
+            },
+            {
+                type: jsPsychSurveyHtmlForm,
+                preamble: '<div class="question-title">Si el software se usa para vigilancia masiva, ¿cuál es la probabilidad de que Carlos sea moralmente culpable?</div>',
+                html: `
+                    <div class="probability-scale">
+                        <input type="range" name="probability" min="0" max="100" value="50" id="prob-slider-3" required oninput="updateSliderValue('prob-slider-3', 'slider-value-3')">
+                        <div class="scale-labels">
+                            <span>0% (No culpable)</span>
+                            <span id="slider-value-3">50%</span>
+                            <span>100% (Totalmente culpable)</span>
+                        </div>
+                    </div>
+                `,
+                data: { scenario: 'tech_intention', question_type: 'conditional_culpability' }
+            }
+        ];
+
+        // Escenario 4: Probabilidades de resultados
+        const humanitarian_scenario = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="scenario-text">
+                    <h3>Probabilidades de Resultados Morales</h3>
+                    <p>Elena es directora de una ONG de ayuda humanitaria. Debe decidir cómo distribuir fondos limitados:</p>
+                    
+                    <p><strong>Opción A: Programa de vacunación</strong><br>
+                    • 90% probabilidad de salvar 100 vidas<br>
+                    • 10% probabilidad de fallo del programa (0 vidas salvadas)</p>
+                    
+                    <p><strong>Opción B: Programa de agua potable</strong><br>
+                    • 100% probabilidad de salvar 80 vidas<br>
+                    • Sin riesgo de fallo</p>
+                    
+                    <p>Elena elige la Opción A, pero el programa falla y no se salva ninguna vida.</p>
+                </div>
+                <p><em>Presiona ESPACIO para continuar</em></p>
+            `,
+            choices: [' '],
+            data: { scenario: 'humanitarian_outcome' }
+        };
+
+        const humanitarian_questions = [
+            {
+                type: jsPsychSurveyLikert,
+                questions: [{
+                    prompt: "¿Qué tan moralmente correcta fue la decisión original de Elena?",
+                    labels: ['Muy incorrecta', 'Incorrecta', 'Algo incorrecta', 'Neutral', 'Algo correcta', 'Correcta', 'Muy correcta'],
+                    required: true
+                }],
+                data: { scenario: 'humanitarian_outcome', question_type: 'decision_correctness' }
+            },
+            {
+                type: jsPsychSurveyHtmlForm,
+                preamble: '<div class="question-title">Antes de saber el resultado, ¿cuál era la probabilidad de que Elena tomara la decisión moralmente correcta?</div>',
+                html: `
+                    <div class="probability-scale">
+                        <input type="range" name="probability" min="0" max="100" value="50" id="prob-slider-4" required oninput="updateSliderValue('prob-slider-4', 'slider-value-4')">
+                        <div class="scale-labels">
+                            <span>0% (Incorrecta)</span>
+                            <span id="slider-value-4">50%</span>
+                            <span>100% (Correcta)</span>
+                        </div>
+                    </div>
+                `,
+                data: { scenario: 'humanitarian_outcome', question_type: 'ex_ante_probability' }
+            },
+            {
+                type: jsPsychSurveyLikert,
+                questions: [{
+                    prompt: "¿Cambia tu evaluación moral sabiendo que el programa falló?",
+                    labels: ['Mucho peor', 'Algo peor', 'Ligeramente peor', 'No cambia', 'Ligeramente mejor', 'Algo mejor', 'Mucho mejor'],
+                    required: true
+                }],
+                data: { scenario: 'humanitarian_outcome', question_type: 'outcome_dependence' }
             }
         ];
 
@@ -265,6 +387,10 @@
             ...trolley_questions,
             medical_scenario,
             ...medical_questions,
+            tech_scenario,
+            ...tech_questions,
+            humanitarian_scenario,
+            ...humanitarian_questions,
             debrief
         ];
 
