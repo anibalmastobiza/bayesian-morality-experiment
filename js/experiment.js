@@ -8,6 +8,7 @@ const sessionID = urlParams.get('SESSION_ID') || 'no_session';
 
 // Inicializar jsPsych
 const jsPsych = initJsPsych({
+    display_element: 'jspsych-target',
     show_progress_bar: true,
     auto_update_progress_bar: false,
     on_finish: function(data) {
@@ -17,9 +18,6 @@ const jsPsych = initJsPsych({
         }
     }
 });
-
-// Configurar recolección de datos
-setupJsPsychDataCollection(jsPsych);
 
 // Escenarios de moralidad bayesiana basados en la literatura
 const scenarios = [
@@ -344,6 +342,11 @@ const debrief = {
 };
 
 timeline.push(debrief);
+
+// Configurar recolección de datos
+if (typeof setupJsPsychDataCollection === 'function') {
+    setupJsPsychDataCollection(jsPsych);
+}
 
 // Ejecutar el experimento
 jsPsych.run(timeline);
