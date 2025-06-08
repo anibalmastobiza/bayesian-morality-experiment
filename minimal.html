@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Minimal</title>
+</head>
+<body>
+    <h1>Test Básico</h1>
+    <p>Si ves esto, HTML funciona.</p>
+    
+    <div id="test-div">JavaScript no ejecutado</div>
+    
+    <script>
+        document.getElementById('test-div').innerHTML = 'JavaScript funciona!';
+        console.log('JavaScript se ejecutó correctamente');
+    </script>
+    
+    <div id="jspsych-test">Cargando jsPsych...</div>
+    
+    <script src="https://unpkg.com/jspsych@7.3.1"></script>
+    <script>
+        try {
+            document.getElementById('jspsych-test').innerHTML = 'jsPsych cargado. Versión: ' + jsPsych.version();
+        } catch(e) {
+            document.getElementById('jspsych-test').innerHTML = 'Error cargando jsPsych: ' + e.message;
+        }
+    </script>
+</body>
+</html>
